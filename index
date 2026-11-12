@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Easy-to-Read Simplification Explorer</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-muted: #f1f5f9;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --highlight-bg: #fef08a;
+      --highlight-border: #eab308;
+      --highlight-text: #713f12;
+      --hover-bg: #e0f2fe;
+      --radius-lg: 14px;
+      --radius-md: 8px;
+      --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 24px 16px 48px;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      padding: 20px 24px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .header-title h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .header-title p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-main);
+      padding: 8px 14px;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--surface-muted);
+      border-color: #cbd5e1;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* Side-by-side Comparison Grid */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 640px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 14px 20px;
+      background: var(--surface-muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+    }
+
+    .text-body {
+      padding: 24px;
+      font-size: 1.15rem;
+      line-height: 1.85;
+      flex: 1;
+    }
+
+    .etr-text p {
+      margin-bottom: 10px;
+    }
+
+    .etr-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Interactive Spans */
+    .phrase {
+      border-radius: 5px;
+      padding: 2px 4px;
+      margin: 0 -2px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+      border-bottom: 2px dashed #94a3b8;
+    }
+
+    .phrase:hover,
+    .phrase.is-hovered {
+      background-color: var(--hover-bg);
+      border-bottom-color: var(--primary);
+    }
+
+    .phrase.is-selected {
+      background-color: var(--highlight-bg);
+      color: var(--highlight-text);
+      border-bottom: 2px solid var(--highlight-border);
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.35);
+      font-weight: 600;
+    }
+
+    /* Explanation Panel Below */
+    .explanation-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .explanation-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rule-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .rule-category {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .rule-counter {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mapping-preview {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-muted);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 14px;
+      font-size: 0.98rem;
+    }
+
+    .pill-source {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .pill-arrow {
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .pill-target {
+      background: #dcfce7;
+      color: #166534;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .explanation-text {
+      font-size: 1.05rem;
+      color: var(--text-main);
+      line-height: 1.65;
+    }
+
+    .placeholder-state {
+      text-align: center;
+      padding: 18px 12px;
+      color: var(--text-secondary);
+    }
+
+    .placeholder-state strong {
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.05rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-title">
+        <h1>Easy-to-Read Simplification Explorer</h1>
+        <p>Click any highlighted word or phrase in either text to see its translation and Easy-to-Read rule.</p>
+      </div>
+    </header>
+
+    <!-- Side-by-Side Texts -->
+    <main class="comparison-grid" id="comparisonGrid">
+      <section class="card" aria-labelledby="sourceHeading">
+        <div class="card-header">
+          <h2 id="sourceHeading">Source Text</h2>
+          <span class="badge">Original</span>
+        </div>
+        <div class="text-body" id="sourceContainer"></div>
+      </section>
+
+      <section class="card" aria-labelledby="etrHeading">
+        <div class="card-header">
+          <h2 id="etrHeading">Easy-to-Read Version</h2>
+          <span class="badge">Simplified</span>
+        </div>
+        <div class="text-body etr-text" id="etrContainer"></div>
+      </section>
+    </main>
+
+    <!-- Explanation Section Below -->
+    <section class="explanation-card" aria-live="polite" id="explanationPanel">
+      <div class="placeholder-state">
+        <strong>Select a word or phrase above</strong>
+        Click on any part of the text (for example, <em>"Mr"</em>, <em>"but"</em>, <em>"owns"</em>, or <em>"Golden Retriever"</em>) to highlight its match and read why it was adapted.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const RULES = [
+      {
+        id: "mr",
+        category: "Abbreviations & Acronyms",
+        sourceLabel: "Mr",
+        etrLabel: "Mister (used twice instead of 'He')",
+        explanation:
+          "Abbreviations and acronyms must be written out in full in Easy-to-Read, even when they are very common like 'Mr'. Additionally, repeating the character's name ('Mister Smith') instead of relying only on pronouns helps readers keep track of who is being discussed."
+      },
+      {
+        id: "smith",
+        category: "Typography & Capitalization",
+        sourceLabel: "SMITH",
+        etrLabel: "Smith",
+        explanation:
+          "Avoid writing whole words in ALL CAPS. Words written entirely in capital letters lose their distinctive word shape, making them much harder to recognize and read quickly."
+      },
+      {
+        id: "berlin",
+        category: "Context & Geography",
+        sourceLabel: "lives in Berlin,",
+        etrLabel: "lives in Germany, in Berlin.",
+        explanation:
+          "Do not assume readers already know geographical context. Adding the country ('in Germany') before the less known city ('in Berlin') provides clear orientation."
+      },
+      {
+        id: "brandenburg",
+        category: "Removing Unnecessary Details",
+        sourceLabel: "near the Brandenburg gate.",
+        etrLabel: "(Omitted in Easy-to-Read)",
+        explanation:
+          "Secondary landmarks or non-essential details that are not crucial to the main message are removed so the reader can focus on key information without distraction."
+      },
+      {
+        id: "no-cat",
+        category: "Sentence Structure & Negation",
+        sourceLabel: "He doesn't have a cat,",
+        etrLabel: "He has no cat.",
+        explanation:
+          "Contractions ('doesn't') are avoided in favor of clear, direct phrasing ('has no cat')."
+      },
+      {
+        id: "but-clause",
+        category: "One Idea Per Sentence",
+        sourceLabel: "but he",
+        etrLabel: "(New line & new sentence: Mister Smith...)",
+        explanation:
+          "One idea per sentence: the compound sentence is split into short, standalone sentences."
+      },
+      {
+        id: "owns",
+        category: "Plain & Everyday Verbs",
+        sourceLabel: "owns",
+        etrLabel: "has",
+        explanation:
+          "Always choose the simplest, most common verb in everyday speech. 'Owns' is more formal than necessary and is replaced with 'has'."
+      },
+      {
+        id: "dog-breed",
+        category: "General & Familiar Vocabulary",
+        sourceLabel: "a Golden Retriever.",
+        etrLabel: "a dog.",
+        explanation:
+          "Specific or specialized terms like a dog breed ('Golden Retriever') can be unfamiliar or distracting. Replacing the specific breed with the general, everyday category word ('dog') makes the meaning immediately clear."
+      },
+      {
+        id: "pat",
+        category: "Clear Pronouns & Naming",
+        sourceLabel: "Its name is Pat.",
+        etrLabel: "The dog is called Pat.",
+        explanation:
+          "Possessive pronouns like 'Its' can be ambiguous. Repeating the noun ('The dog') makes it unmistakably clear who is named Pat."
+      },
+      {
+        id: "age",
+        category: "Numbers & Explicit Meaning",
+        sourceLabel: "He is four.",
+        etrLabel: "The dog is 4 years old.",
+        explanation:
+          "Write numbers as digits ('4' instead of 'four') because digits are easier to scan and recognize. Always include the unit ('years old') so the meaning is explicit, and clarify 'The dog' so the reader does not confuse the dog's age with Mister Smith's age."
+      }
+    ];
+
+    const SOURCE_TOKENS = [
+      { ruleId: "mr", text: "Mr" },
+      { text: " " },
+      { ruleId: "smith", text: "SMITH" },
+      { text: " " },
+      { ruleId: "berlin", text: "lives in Berlin," },
+      { text: " " },
+      { ruleId: "brandenburg", text: "near the Brandenburg gate." },
+      { text: " " },
+      { ruleId: "no-cat", text: "He doesn't have a cat," },
+      { text: " " },
+      { ruleId: "but-clause", text: "but he" },
+      { text: " " },
+      { ruleId: "owns", text: "owns" },
+      { text: " " },
+      { ruleId: "dog-breed", text: "a Golden Retriever." },
+      { text: " " },
+      { ruleId: "pat", text: "Its name is Pat." },
+      { text: " " },
+      { ruleId: "age", text: "He is four." }
+    ];
+
+    const ETR_LINES = [
+      [
+        { ruleId: "mr", text: "Mister" },
+        { text: " " },
+        { ruleId: "smith", text: "Smith" },
+        { text: " " },
+        { ruleId: "berlin", text: "lives in Germany, in Berlin." }
+      ],
+      [
+        { ruleId: "no-cat", text: "He has no cat." }
+      ],
+      [
+        { ruleId: "mr", text: "Mister" },
+        { text: " " },
+        { ruleId: "smith", text: "Smith" },
+        { text: " " },
+        { ruleId: "owns", text: "has" },
+        { text: " " },
+        { ruleId: "dog-breed", text: "a dog." }
+      ],
+      [
+        { ruleId: "pat", text: "The dog is called Pat." }
+      ],
+      [
+        { ruleId: "age", text: "The dog is 4 years old." }
+      ]
+    ];
+
+    let selectedRuleId = "mr"; // Default selection matching user's example
+
+    const sourceContainer = document.getElementById("sourceContainer");
+    const etrContainer = document.getElementById("etrContainer");
+    const explanationPanel = document.getElementById("explanationPanel");
+
+    function createTokenElement(token) {
+      if (!token.ruleId) {
+        return document.createTextNode(token.text);
+      }
+      const span = document.createElement("span");
+      span.className = "phrase";
+      span.dataset.ruleId = token.ruleId;
+      span.textContent = token.text;
+      span.tabIndex = 0;
+      span.setAttribute("role", "button");
+
+      span.addEventListener("click", () => selectRule(token.ruleId));
+      span.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectRule(token.ruleId);
+        }
+      });
+      span.addEventListener("mouseenter", () => setHoverState(token.ruleId, true));
+      span.addEventListener("mouseleave", () => setHoverState(token.ruleId, false));
+
+      return span;
+    }
+
+    function renderTexts() {
+      sourceContainer.innerHTML = "";
+      SOURCE_TOKENS.forEach((token) => {
+        sourceContainer.appendChild(createTokenElement(token));
+      });
+
+      etrContainer.innerHTML = "";
+      ETR_LINES.forEach((lineTokens) => {
+        const p = document.createElement("p");
+        lineTokens.forEach((token) => {
+          p.appendChild(createTokenElement(token));
+        });
+        etrContainer.appendChild(p);
+      });
+    }
+
+    function setHoverState(ruleId, isHovered) {
+      document.querySelectorAll(`.phrase[data-rule-id="${ruleId}"]`).forEach((el) => {
+        el.classList.toggle("is-hovered", isHovered);
+      });
+    }
+
+    function selectRule(ruleId) {
+      selectedRuleId = ruleId;
+      updateHighlights();
+      renderExplanation();
+    }
+
+    function updateHighlights() {
+      document.querySelectorAll(".phrase").forEach((el) => {
+        el.classList.toggle("is-selected", el.dataset.ruleId === selectedRuleId);
+      });
+    }
+
+    function renderExplanation() {
+      if (!selectedRuleId) {
+        explanationPanel.innerHTML = `
+          <div class="placeholder-state">
+            <strong>Select a word or phrase above</strong>
+            Click on any part of the text (for example, <em>"Mr"</em>, <em>"but"</em>, <em>"owns"</em>, or <em>"Golden Retriever"</em>) to highlight its match and read why it was adapted.
+          </div>
+        `;
+        return;
+      }
+
+      const index = RULES.findIndex((r) => r.id === selectedRuleId);
+      const rule = RULES[index];
+
+      explanationPanel.innerHTML = `
+        <div class="explanation-top">
+          <div class="rule-meta">
+            <span class="rule-category">${rule.category}</span>
+            <span class="rule-counter">Rule ${index + 1} of ${RULES.length}</span>
+          </div>
+          <div class="nav-buttons">
+            <button type="button" id="prevRuleBtn" ${index === 0 ? "disabled" : ""}>← Previous</button>
+            <button type="button" id="nextRuleBtn" ${index === RULES.length - 1 ? "disabled" : ""}>Next →</button>
+          </div>
+        </div>
+        <div class="mapping-preview">
+          <span class="pill-source">${rule.sourceLabel}</span>
+          <span class="pill-arrow">→</span>
+          <span class="pill-target">${rule.etrLabel}</span>
+        </div>
+        <p class="explanation-text">${rule.explanation}</p>
+      `;
+
+      document.getElementById("prevRuleBtn").addEventListener("click", () => {
+        if (index > 0) selectRule(RULES[index - 1].id);
+      });
+
+      document.getElementById("nextRuleBtn").addEventListener("click", () => {
+        if (index < RULES.length - 1) selectRule(RULES[index + 1].id);
+      });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (!selectedRuleId) return;
+      const index = RULES.findIndex((r) => r.id === selectedRuleId);
+      if (e.key === "ArrowRight" && index < RULES.length - 1) {
+        selectRule(RULES[index + 1].id);
+      } else if (e.key === "ArrowLeft" && index > 0) {
+        selectRule(RULES[index - 1].id);
+      }
+    });
+
+    // Initialize
+    renderTexts();
+    updateHighlights();
+    renderExplanation();
+  </script>
+</body>
+</html>
